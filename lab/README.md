@@ -110,3 +110,5 @@ python lab/tools/faults.py reset --context capstone-aiops-lab
 ```
 
 Validation for this dashboard: Helm lint passed; all 19 PromQL target expressions executed successfully against live Prometheus; Grafana loaded 19 panels. Browser verification during the existing cart incident showed cart 5xx at 100%, product/image 5xx at 0%, total 5xx near 25%, and active traffic. No additional fault was injected for this dashboard update.
+
+Quick command reference (Vietnamese): [Inject, reset, inspect and reconnect](FAULT-COMMANDS.md).
