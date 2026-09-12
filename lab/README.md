@@ -92,3 +92,21 @@ Khi kết thúc dùng lab: uninstall hai Helm release, xóa PVC lab và chờ EB
 `python -m pytest lab/tests -q`; `helm lint lab/charts/lab -f lab/app-values.yaml`; lint tương tự với `observe-values.yaml`; `terraform validate`. Smoke qua HTTP phải chạy trên deployment thực tế. Xem `VALIDATION.md` để biết chính xác những gì đã kiểm tra; không suy ra tất cả fault đã pass từ unit tests.
 
 F01 đổi selector và recycle web client Pods để loại kết nối gRPC cũ; chỉ tính lỗi khi Catalog vẫn trả thành công nhưng Cart thất bại. F07 chờ bằng chứng OOMKilled trước khi báo inject thành công.
+
+### Reading the demo dashboard
+
+Open http://localhost:13000/d/lab-health (refresh 5 seconds, last 15 minutes).
+The top cards show Web scrape reachability, observed API/image RPS, HTTP success/5xx percentages, load-generator availability, and Kubernetes telemetry availability.
+The next row separates product, cart, and image failures. HTTP panels use a one-minute window; allow approximately one minute after recovery for previous failures to age out.
+No data is not success: HTTP statistics are masked when the Web scrape is down, and percentages require observed requests. A Ready Pod does not prove its dependencies work.
+Deployment availability highlights zero replicas, including F08. Waiting reasons and last termination reasons help distinguish image pull, crash, and OOM symptoms. Last termination is historical evidence, not proof of an ongoing failure.
+Metrics aggregate HTTP methods for each route, so the cart card covers all cart operations. The dashboard does not expose injector ground truth or claim a root cause.
+
+Operator reset (from the repository, with the operator kubeconfig):
+
+```powershell
+$env:KUBECONFIG = 'E:\capstone-aiops-lab\.lab-state\kubeconfig'
+python lab/tools/faults.py reset --context capstone-aiops-lab
+```
+
+Validation for this dashboard: Helm lint passed; all 19 PromQL target expressions executed successfully against live Prometheus; Grafana loaded 19 panels. Browser verification during the existing cart incident showed cart 5xx at 100%, product/image 5xx at 0%, total 5xx near 25%, and active traffic. No additional fault was injected for this dashboard update.

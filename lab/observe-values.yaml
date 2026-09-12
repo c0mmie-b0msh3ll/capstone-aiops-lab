@@ -6,57 +6,1329 @@ pvcs:
   prometheus: 2Gi
 configMaps:
   collector:
-    config.yaml: "exporters:\n  debug:\n    verbosity: basic\n  otlp/jaeger:\n   \
-      \ endpoint: jaeger:4317\n    tls:\n      insecure: true\n  prometheus:\n   \
-      \ endpoint: 0.0.0.0:8889\n    resource_to_telemetry_conversion:\n      enabled:\
-      \ true\nextensions:\n  health_check:\n    endpoint: 0.0.0.0:13133\nprocessors:\n\
-      \  batch: {}\n  memory_limiter:\n    check_interval: 1s\n    limit_mib: 350\n\
-      \    spike_limit_mib: 80\nreceivers:\n  otlp:\n    protocols:\n      grpc:\n\
-      \        endpoint: 0.0.0.0:4317\n      http:\n        endpoint: 0.0.0.0:4318\n\
-      service:\n  extensions:\n  - health_check\n  pipelines:\n    logs:\n      exporters:\n\
-      \      - debug\n      processors:\n      - memory_limiter\n      - batch\n \
-      \     receivers:\n      - otlp\n    metrics:\n      exporters:\n      - prometheus\n\
-      \      processors:\n      - memory_limiter\n      - batch\n      receivers:\n\
-      \      - otlp\n    traces:\n      exporters:\n      - otlp/jaeger\n      processors:\n\
-      \      - memory_limiter\n      - batch\n      receivers:\n      - otlp\n"
+    config.yaml: |
+      exporters:
+        debug:
+          verbosity: basic
+        otlp/jaeger:
+          endpoint: jaeger:4317
+          tls:
+            insecure: true
+        prometheus:
+          endpoint: 0.0.0.0:8889
+          resource_to_telemetry_conversion:
+            enabled: true
+      extensions:
+        health_check:
+          endpoint: 0.0.0.0:13133
+      processors:
+        batch: {}
+        memory_limiter:
+          check_interval: 1s
+          limit_mib: 350
+          spike_limit_mib: 80
+      receivers:
+        otlp:
+          protocols:
+            grpc:
+              endpoint: 0.0.0.0:4317
+            http:
+              endpoint: 0.0.0.0:4318
+      service:
+        extensions:
+        - health_check
+        pipelines:
+          logs:
+            exporters:
+            - debug
+            processors:
+            - memory_limiter
+            - batch
+            receivers:
+            - otlp
+          metrics:
+            exporters:
+            - prometheus
+            processors:
+            - memory_limiter
+            - batch
+            receivers:
+            - otlp
+          traces:
+            exporters:
+            - otlp/jaeger
+            processors:
+            - memory_limiter
+            - batch
+            receivers:
+            - otlp
   jaeger:
-    config.yaml: "exporters:\n  jaeger_storage_exporter:\n    trace_storage: memory_backend\n\
-      extensions:\n  jaeger_query:\n    storage:\n      traces: memory_backend\n \
-      \ jaeger_storage:\n    backends:\n      memory_backend:\n        memory:\n \
-      \         max_traces: 10000\nprocessors:\n  batch: {}\nreceivers:\n  otlp:\n\
-      \    protocols:\n      grpc:\n        endpoint: 0.0.0.0:4317\nservice:\n  extensions:\n\
-      \  - jaeger_storage\n  - jaeger_query\n  pipelines:\n    traces:\n      exporters:\n\
-      \      - jaeger_storage_exporter\n      processors:\n      - batch\n      receivers:\n\
-      \      - otlp\n"
+    config.yaml: |
+      exporters:
+        jaeger_storage_exporter:
+          trace_storage: memory_backend
+      extensions:
+        jaeger_query:
+          storage:
+            traces: memory_backend
+        jaeger_storage:
+          backends:
+            memory_backend:
+              memory:
+                max_traces: 10000
+      processors:
+        batch: {}
+      receivers:
+        otlp:
+          protocols:
+            grpc:
+              endpoint: 0.0.0.0:4317
+      service:
+        extensions:
+        - jaeger_storage
+        - jaeger_query
+        pipelines:
+          traces:
+            exporters:
+            - jaeger_storage_exporter
+            processors:
+            - batch
+            receivers:
+            - otlp
   prometheus:
-    config.yaml: "global:\n  evaluation_interval: 10s\n  scrape_interval: 10s\nscrape_configs:\n\
-      - job_name: web\n  static_configs:\n  - targets:\n    - web.lab-app:8080\n-\
-      \ job_name: otel\n  static_configs:\n  - targets:\n    - otel-collector:8889\n\
-      - job_name: kube-state\n  static_configs:\n  - targets:\n    - kube-state-metrics:8080\n"
+    config.yaml: |
+      global:
+        evaluation_interval: 10s
+        scrape_interval: 10s
+      scrape_configs:
+      - job_name: web
+        static_configs:
+        - targets:
+          - web.lab-app:8080
+      - job_name: otel
+        static_configs:
+        - targets:
+          - otel-collector:8889
+      - job_name: kube-state
+        static_configs:
+        - targets:
+          - kube-state-metrics:8080
   grafana-datasources:
-    datasources.yaml: "apiVersion: 1\ndatasources:\n- isDefault: true\n  name: Prometheus\n\
-      \  type: prometheus\n  uid: prometheus\n  url: http://prometheus:9090\n- name:\
-      \ Jaeger\n  type: jaeger\n  uid: jaeger\n  url: http://jaeger:16686\n"
+    datasources.yaml: |
+      apiVersion: 1
+      datasources:
+      - isDefault: true
+        name: Prometheus
+        type: prometheus
+        uid: prometheus
+        url: http://prometheus:9090
+      - name: Jaeger
+        type: jaeger
+        uid: jaeger
+        url: http://jaeger:16686
   grafana-providers:
-    providers.yaml: "apiVersion: 1\nproviders:\n- name: lab\n  options:\n    path:\
-      \ /dashboards\n"
+    providers.yaml: |
+      apiVersion: 1
+      providers:
+      - name: lab
+        options:
+          path: /dashboards
   grafana-dashboards:
-    lab.json: '{"title": "AIOps Lab \u2014 Service Health", "uid": "lab-health", "schemaVersion":
-      39, "version": 1, "refresh": "10s", "time": {"from": "now-15m", "to": "now"},
-      "panels": [{"id": 1, "title": "Request rate", "type": "timeseries", "datasource":
-      {"type": "prometheus", "uid": "prometheus"}, "gridPos": {"x": 0, "y": 0, "w":
-      12, "h": 9}, "targets": [{"expr": "sum by (route) (rate(lab_http_requests_total[1m]))",
-      "refId": "A"}]}, {"id": 2, "title": "Server errors", "type": "timeseries", "datasource":
-      {"type": "prometheus", "uid": "prometheus"}, "gridPos": {"x": 12, "y": 0, "w":
-      12, "h": 9}, "targets": [{"expr": "sum by (route) (rate(lab_http_requests_total{status=~\"5..\"}[1m]))",
-      "refId": "A"}]}, {"id": 3, "title": "P95 latency", "type": "timeseries", "datasource":
-      {"type": "prometheus", "uid": "prometheus"}, "gridPos": {"x": 0, "y": 9, "w":
-      12, "h": 9}, "targets": [{"expr": "histogram_quantile(0.95, sum by (le,route)
-      (rate(lab_http_request_seconds_bucket[1m])))", "refId": "A"}]}, {"id": 4, "title":
-      "Container restarts", "type": "timeseries", "datasource": {"type": "prometheus",
-      "uid": "prometheus"}, "gridPos": {"x": 12, "y": 9, "w": 12, "h": 9}, "targets":
-      [{"expr": "kube_pod_container_status_restarts_total{namespace=\"lab-app\"}",
-      "refId": "A"}]}]}'
+    lab.json: |-
+      {
+        "title": "AIOps Lab · Demo & Service Health",
+        "uid": "lab-health",
+        "schemaVersion": 39,
+        "version": 2,
+        "refresh": "5s",
+        "time": {
+          "from": "now-15m",
+          "to": "now"
+        },
+        "timezone": "browser",
+        "editable": false,
+        "tags": [
+          "aiops",
+          "demo"
+        ],
+        "links": [
+          {
+            "title": "Mở Web · thử giỏ hàng",
+            "url": "http://localhost:18081",
+            "type": "link",
+            "targetBlank": true
+          },
+          {
+            "title": "Jaeger · tìm trace lỗi",
+            "url": "http://localhost:16686",
+            "type": "link",
+            "targetBlank": true
+          }
+        ],
+        "panels": [
+          {
+            "id": 1,
+            "title": "BẮT ĐẦU Ở ĐÂY · Đọc từ trái sang phải",
+            "type": "text",
+            "gridPos": {
+              "x": 0,
+              "y": 0,
+              "w": 24,
+              "h": 4
+            },
+            "description": "",
+            "fieldConfig": {
+              "defaults": {
+                "unit": "short",
+                "noValue": "CHƯA CÓ DỮ LIỆU",
+                "color": {
+                  "mode": "palette-classic"
+                },
+                "custom": {}
+              },
+              "overrides": []
+            },
+            "options": {
+              "mode": "markdown",
+              "content": "### Traffic tự động → Web → Catalog / Cart → PostgreSQL / Valkey\n**Có sẵn 1 load-generator:** mỗi vòng tối đa 10 request, nghỉ 3 giây; RPS không cố định. **F02:** xem sản phẩm vẫn được, giỏ hàng lỗi; Pod có thể vẫn xanh.\n\n**Đọc demo:** quan sát bình thường → bơm lỗi → đợi 30–60 giây → xem ô lỗi và trace → sửa/reset → xác nhận phục hồi. Số liệu HTTP dùng cửa sổ 1 phút, nên sau sửa cần khoảng 1 phút để lỗi cũ trôi hết. Màu xám / CHƯA CÓ DỮ LIỆU không có nghĩa hệ thống tốt."
+            }
+          },
+          {
+            "id": 2,
+            "title": "1 · Web có phản hồi metric?",
+            "type": "stat",
+            "gridPos": {
+              "x": 0,
+              "y": 4,
+              "w": 4,
+              "h": 4
+            },
+            "description": "Chỉ kiểm tra Prometheus truy cập /metrics. Không xác nhận giỏ hàng hoặc database hoạt động.",
+            "fieldConfig": {
+              "defaults": {
+                "unit": "short",
+                "noValue": "CHƯA CÓ DỮ LIỆU",
+                "color": {
+                  "mode": "palette-classic"
+                },
+                "custom": {},
+                "mappings": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "0": {
+                        "text": "MẤT KẾT NỐI",
+                        "color": "red",
+                        "index": 0
+                      },
+                      "1": {
+                        "text": "KẾT NỐI ĐƯỢC",
+                        "color": "green",
+                        "index": 1
+                      }
+                    }
+                  }
+                ]
+              },
+              "overrides": []
+            },
+            "options": {
+              "colorMode": "background",
+              "graphMode": "none",
+              "textMode": "auto",
+              "reduceOptions": {
+                "calcs": [
+                  "lastNotNull"
+                ],
+                "fields": "",
+                "values": false
+              }
+            },
+            "datasource": {
+              "type": "prometheus",
+              "uid": "prometheus"
+            },
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "up{job=\"web\"}",
+                "legendFormat": "Web",
+                "range": false,
+                "instant": true
+              }
+            ]
+          },
+          {
+            "id": 3,
+            "title": "2 · Traffic thực tế / giây",
+            "type": "stat",
+            "gridPos": {
+              "x": 4,
+              "y": 4,
+              "w": 4,
+              "h": 4
+            },
+            "description": "Request API và ảnh; loại bỏ health check, metrics và trang tĩnh. Có thể giảm khi chờ timeout hoặc hành trình dừng sớm.",
+            "fieldConfig": {
+              "defaults": {
+                "unit": "reqps",
+                "noValue": "CHƯA CÓ DỮ LIỆU",
+                "color": {
+                  "mode": "thresholds"
+                },
+                "custom": {},
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "value": null,
+                      "color": "orange"
+                    },
+                    {
+                      "value": 0.01,
+                      "color": "blue"
+                    }
+                  ]
+                },
+                "decimals": 2
+              },
+              "overrides": []
+            },
+            "options": {
+              "colorMode": "background",
+              "graphMode": "none",
+              "textMode": "auto",
+              "reduceOptions": {
+                "calcs": [
+                  "lastNotNull"
+                ],
+                "fields": "",
+                "values": false
+              }
+            },
+            "datasource": {
+              "type": "prometheus",
+              "uid": "prometheus"
+            },
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "sum(rate(lab_http_requests_total{route=~\"/api/.*|/images/.*\"}[1m])) and on() (up{job=\"web\"} == 1)",
+                "legendFormat": "request / giây",
+                "range": false,
+                "instant": true
+              }
+            ]
+          },
+          {
+            "id": 4,
+            "title": "3 · Request thành công · 1 phút",
+            "type": "stat",
+            "gridPos": {
+              "x": 8,
+              "y": 4,
+              "w": 4,
+              "h": 4
+            },
+            "description": "Tỷ lệ request HTTP 2xx/3xx; không phải tỷ lệ hoàn tất toàn bộ hành trình. Không có traffic thì không kết luận thành công.",
+            "fieldConfig": {
+              "defaults": {
+                "unit": "percent",
+                "noValue": "CHƯA CÓ DỮ LIỆU",
+                "color": {
+                  "mode": "thresholds"
+                },
+                "custom": {},
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "value": null,
+                      "color": "red"
+                    },
+                    {
+                      "value": 95,
+                      "color": "orange"
+                    },
+                    {
+                      "value": 99.9,
+                      "color": "green"
+                    }
+                  ]
+                },
+                "decimals": 1
+              },
+              "overrides": []
+            },
+            "options": {
+              "colorMode": "background",
+              "graphMode": "none",
+              "textMode": "auto",
+              "reduceOptions": {
+                "calcs": [
+                  "lastNotNull"
+                ],
+                "fields": "",
+                "values": false
+              }
+            },
+            "datasource": {
+              "type": "prometheus",
+              "uid": "prometheus"
+            },
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "100 * (sum(rate(lab_http_requests_total{route=~\"/api/.*|/images/.*\",status=~\"2..|3..\"}[1m])) or (sum(rate(lab_http_requests_total{route=~\"/api/.*|/images/.*\"}[1m])) * 0)) / (sum(rate(lab_http_requests_total{route=~\"/api/.*|/images/.*\"}[1m])) > 0) and on() (up{job=\"web\"} == 1)",
+                "legendFormat": "Thành công",
+                "range": false,
+                "instant": true
+              }
+            ]
+          },
+          {
+            "id": 5,
+            "title": "4 · Request lỗi máy chủ · 1 phút",
+            "type": "stat",
+            "gridPos": {
+              "x": 12,
+              "y": 4,
+              "w": 4,
+              "h": 4
+            },
+            "description": "",
+            "fieldConfig": {
+              "defaults": {
+                "unit": "percent",
+                "noValue": "CHƯA CÓ DỮ LIỆU",
+                "color": {
+                  "mode": "thresholds"
+                },
+                "custom": {},
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "value": null,
+                      "color": "green"
+                    },
+                    {
+                      "value": 0.1,
+                      "color": "orange"
+                    },
+                    {
+                      "value": 5,
+                      "color": "red"
+                    }
+                  ]
+                },
+                "decimals": 1
+              },
+              "overrides": []
+            },
+            "options": {
+              "colorMode": "background",
+              "graphMode": "none",
+              "textMode": "auto",
+              "reduceOptions": {
+                "calcs": [
+                  "lastNotNull"
+                ],
+                "fields": "",
+                "values": false
+              }
+            },
+            "datasource": {
+              "type": "prometheus",
+              "uid": "prometheus"
+            },
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "100 * (sum(rate(lab_http_requests_total{route=~\"/api/.*|/images/.*\",status=~\"5..\"}[1m])) or (sum(rate(lab_http_requests_total{route=~\"/api/.*|/images/.*\"}[1m])) * 0)) / (sum(rate(lab_http_requests_total{route=~\"/api/.*|/images/.*\"}[1m])) > 0) and on() (up{job=\"web\"} == 1)",
+                "legendFormat": "HTTP 5xx",
+                "range": false,
+                "instant": true
+              }
+            ]
+          },
+          {
+            "id": 6,
+            "title": "5 · Load-generator · Pod sẵn sàng",
+            "type": "stat",
+            "gridPos": {
+              "x": 16,
+              "y": 4,
+              "w": 4,
+              "h": 4
+            },
+            "description": "Pod sẵn sàng không đảm bảo hành trình thành công. Đối chiếu traffic và lỗi HTTP.",
+            "fieldConfig": {
+              "defaults": {
+                "unit": "short",
+                "noValue": "CHƯA CÓ DỮ LIỆU",
+                "color": {
+                  "mode": "palette-classic"
+                },
+                "custom": {},
+                "mappings": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "0": {
+                        "text": "ĐÃ DỪNG",
+                        "color": "red",
+                        "index": 0
+                      },
+                      "1": {
+                        "text": "ĐANG CHẠY",
+                        "color": "green",
+                        "index": 1
+                      }
+                    }
+                  }
+                ]
+              },
+              "overrides": []
+            },
+            "options": {
+              "colorMode": "background",
+              "graphMode": "none",
+              "textMode": "auto",
+              "reduceOptions": {
+                "calcs": [
+                  "lastNotNull"
+                ],
+                "fields": "",
+                "values": false
+              }
+            },
+            "datasource": {
+              "type": "prometheus",
+              "uid": "prometheus"
+            },
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "kube_deployment_status_replicas_available{namespace=\"lab-app\",deployment=\"load-generator\"} and on() (up{job=\"kube-state\"} == 1)",
+                "legendFormat": "Pod",
+                "range": false,
+                "instant": true
+              }
+            ]
+          },
+          {
+            "id": 7,
+            "title": "6 · Thu thập trạng thái Kubernetes",
+            "type": "stat",
+            "gridPos": {
+              "x": 20,
+              "y": 4,
+              "w": 4,
+              "h": 4
+            },
+            "description": "",
+            "fieldConfig": {
+              "defaults": {
+                "unit": "short",
+                "noValue": "CHƯA CÓ DỮ LIỆU",
+                "color": {
+                  "mode": "palette-classic"
+                },
+                "custom": {},
+                "mappings": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "0": {
+                        "text": "MẤT DỮ LIỆU",
+                        "color": "red",
+                        "index": 0
+                      },
+                      "1": {
+                        "text": "ĐANG THU THẬP",
+                        "color": "green",
+                        "index": 1
+                      }
+                    }
+                  }
+                ]
+              },
+              "overrides": []
+            },
+            "options": {
+              "colorMode": "background",
+              "graphMode": "none",
+              "textMode": "auto",
+              "reduceOptions": {
+                "calcs": [
+                  "lastNotNull"
+                ],
+                "fields": "",
+                "values": false
+              }
+            },
+            "datasource": {
+              "type": "prometheus",
+              "uid": "prometheus"
+            },
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "up{job=\"kube-state\"}",
+                "legendFormat": "Kube metrics",
+                "range": false,
+                "instant": true
+              }
+            ]
+          },
+          {
+            "id": 8,
+            "title": "XEM SẢN PHẨM · % request lỗi 5xx",
+            "type": "stat",
+            "gridPos": {
+              "x": 0,
+              "y": 8,
+              "w": 8,
+              "h": 4
+            },
+            "description": "Chỉ hiển thị khi có request trong cửa sổ 1 phút và Web còn được scrape. Chưa có dữ liệu có thể do hành trình đã dừng ở bước trước.",
+            "fieldConfig": {
+              "defaults": {
+                "unit": "percent",
+                "noValue": "CHƯA CÓ DỮ LIỆU",
+                "color": {
+                  "mode": "thresholds"
+                },
+                "custom": {},
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "value": null,
+                      "color": "green"
+                    },
+                    {
+                      "value": 0.1,
+                      "color": "orange"
+                    },
+                    {
+                      "value": 5,
+                      "color": "red"
+                    }
+                  ]
+                },
+                "decimals": 1
+              },
+              "overrides": []
+            },
+            "options": {
+              "colorMode": "background",
+              "graphMode": "none",
+              "textMode": "auto",
+              "reduceOptions": {
+                "calcs": [
+                  "lastNotNull"
+                ],
+                "fields": "",
+                "values": false
+              }
+            },
+            "datasource": {
+              "type": "prometheus",
+              "uid": "prometheus"
+            },
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "100 * (sum(rate(lab_http_requests_total{route=~\"/api/products.*\",status=~\"5..\"}[1m])) or (sum(rate(lab_http_requests_total{route=~\"/api/products.*\"}[1m])) * 0)) / (sum(rate(lab_http_requests_total{route=~\"/api/products.*\"}[1m])) > 0) and on() (up{job=\"web\"} == 1)",
+                "legendFormat": "XEM SẢN PHẨM",
+                "range": false,
+                "instant": true
+              }
+            ]
+          },
+          {
+            "id": 9,
+            "title": "GIỎ HÀNG · % request lỗi 5xx",
+            "type": "stat",
+            "gridPos": {
+              "x": 8,
+              "y": 8,
+              "w": 8,
+              "h": 4
+            },
+            "description": "Chỉ hiển thị khi có request trong cửa sổ 1 phút và Web còn được scrape. Chưa có dữ liệu có thể do hành trình đã dừng ở bước trước.",
+            "fieldConfig": {
+              "defaults": {
+                "unit": "percent",
+                "noValue": "CHƯA CÓ DỮ LIỆU",
+                "color": {
+                  "mode": "thresholds"
+                },
+                "custom": {},
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "value": null,
+                      "color": "green"
+                    },
+                    {
+                      "value": 0.1,
+                      "color": "orange"
+                    },
+                    {
+                      "value": 5,
+                      "color": "red"
+                    }
+                  ]
+                },
+                "decimals": 1
+              },
+              "overrides": []
+            },
+            "options": {
+              "colorMode": "background",
+              "graphMode": "none",
+              "textMode": "auto",
+              "reduceOptions": {
+                "calcs": [
+                  "lastNotNull"
+                ],
+                "fields": "",
+                "values": false
+              }
+            },
+            "datasource": {
+              "type": "prometheus",
+              "uid": "prometheus"
+            },
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "100 * (sum(rate(lab_http_requests_total{route=~\"/api/cart.*\",status=~\"5..\"}[1m])) or (sum(rate(lab_http_requests_total{route=~\"/api/cart.*\"}[1m])) * 0)) / (sum(rate(lab_http_requests_total{route=~\"/api/cart.*\"}[1m])) > 0) and on() (up{job=\"web\"} == 1)",
+                "legendFormat": "GIỎ HÀNG",
+                "range": false,
+                "instant": true
+              }
+            ]
+          },
+          {
+            "id": 10,
+            "title": "ẢNH SẢN PHẨM · % request lỗi 5xx",
+            "type": "stat",
+            "gridPos": {
+              "x": 16,
+              "y": 8,
+              "w": 8,
+              "h": 4
+            },
+            "description": "Chỉ hiển thị khi có request trong cửa sổ 1 phút và Web còn được scrape. Chưa có dữ liệu có thể do hành trình đã dừng ở bước trước.",
+            "fieldConfig": {
+              "defaults": {
+                "unit": "percent",
+                "noValue": "CHƯA CÓ DỮ LIỆU",
+                "color": {
+                  "mode": "thresholds"
+                },
+                "custom": {},
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "value": null,
+                      "color": "green"
+                    },
+                    {
+                      "value": 0.1,
+                      "color": "orange"
+                    },
+                    {
+                      "value": 5,
+                      "color": "red"
+                    }
+                  ]
+                },
+                "decimals": 1
+              },
+              "overrides": []
+            },
+            "options": {
+              "colorMode": "background",
+              "graphMode": "none",
+              "textMode": "auto",
+              "reduceOptions": {
+                "calcs": [
+                  "lastNotNull"
+                ],
+                "fields": "",
+                "values": false
+              }
+            },
+            "datasource": {
+              "type": "prometheus",
+              "uid": "prometheus"
+            },
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "100 * (sum(rate(lab_http_requests_total{route=~\"/images/.*\",status=~\"5..\"}[1m])) or (sum(rate(lab_http_requests_total{route=~\"/images/.*\"}[1m])) * 0)) / (sum(rate(lab_http_requests_total{route=~\"/images/.*\"}[1m])) > 0) and on() (up{job=\"web\"} == 1)",
+                "legendFormat": "ẢNH SẢN PHẨM",
+                "range": false,
+                "instant": true
+              }
+            ]
+          },
+          {
+            "id": 11,
+            "title": "Traffic thành công và thất bại · request / giây",
+            "type": "timeseries",
+            "gridPos": {
+              "x": 0,
+              "y": 12,
+              "w": 12,
+              "h": 8
+            },
+            "description": "",
+            "fieldConfig": {
+              "defaults": {
+                "unit": "reqps",
+                "noValue": "CHƯA CÓ DỮ LIỆU",
+                "color": {
+                  "mode": "palette-classic"
+                },
+                "custom": {
+                  "drawStyle": "line",
+                  "lineWidth": 2,
+                  "fillOpacity": 12,
+                  "spanNulls": false
+                }
+              },
+              "overrides": [
+                {
+                  "matcher": {
+                    "id": "byName",
+                    "options": "Thành công · 2xx/3xx"
+                  },
+                  "properties": [
+                    {
+                      "id": "color",
+                      "value": {
+                        "mode": "fixed",
+                        "fixedColor": "green"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "matcher": {
+                    "id": "byName",
+                    "options": "Lỗi máy chủ · 5xx"
+                  },
+                  "properties": [
+                    {
+                      "id": "color",
+                      "value": {
+                        "mode": "fixed",
+                        "fixedColor": "red"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "matcher": {
+                    "id": "byName",
+                    "options": "Lỗi yêu cầu · 4xx"
+                  },
+                  "properties": [
+                    {
+                      "id": "color",
+                      "value": {
+                        "mode": "fixed",
+                        "fixedColor": "orange"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            "options": {
+              "tooltip": {
+                "mode": "multi",
+                "sort": "desc"
+              },
+              "legend": {
+                "displayMode": "table",
+                "placement": "bottom",
+                "calcs": [
+                  "lastNotNull",
+                  "max"
+                ]
+              }
+            },
+            "datasource": {
+              "type": "prometheus",
+              "uid": "prometheus"
+            },
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "sum(rate(lab_http_requests_total{route=~\"/api/.*|/images/.*\",status=~\"2..|3..\"}[1m])) and on() (up{job=\"web\"} == 1)",
+                "legendFormat": "Thành công · 2xx/3xx",
+                "range": true,
+                "instant": false
+              },
+              {
+                "refId": "B",
+                "expr": "(sum(rate(lab_http_requests_total{route=~\"/api/.*|/images/.*\",status=~\"5..\"}[1m])) or (sum(rate(lab_http_requests_total{route=~\"/api/.*|/images/.*\"}[1m])) * 0)) and on() (up{job=\"web\"} == 1)",
+                "legendFormat": "Lỗi máy chủ · 5xx",
+                "range": true,
+                "instant": false
+              },
+              {
+                "refId": "C",
+                "expr": "(sum(rate(lab_http_requests_total{route=~\"/api/.*|/images/.*\",status=~\"4..\"}[1m])) or (sum(rate(lab_http_requests_total{route=~\"/api/.*|/images/.*\"}[1m])) * 0)) and on() (up{job=\"web\"} == 1)",
+                "legendFormat": "Lỗi yêu cầu · 4xx",
+                "range": true,
+                "instant": false
+              }
+            ]
+          },
+          {
+            "id": 12,
+            "title": "Thao tác nào đang lỗi? · % HTTP 5xx",
+            "type": "timeseries",
+            "gridPos": {
+              "x": 12,
+              "y": 12,
+              "w": 12,
+              "h": 8
+            },
+            "description": "",
+            "fieldConfig": {
+              "defaults": {
+                "unit": "percent",
+                "noValue": "CHƯA CÓ DỮ LIỆU",
+                "color": {
+                  "mode": "palette-classic"
+                },
+                "custom": {
+                  "drawStyle": "line",
+                  "lineWidth": 2,
+                  "fillOpacity": 12,
+                  "spanNulls": false
+                },
+                "min": 0,
+                "max": 100
+              },
+              "overrides": []
+            },
+            "options": {
+              "tooltip": {
+                "mode": "multi",
+                "sort": "desc"
+              },
+              "legend": {
+                "displayMode": "table",
+                "placement": "bottom",
+                "calcs": [
+                  "lastNotNull",
+                  "max"
+                ]
+              }
+            },
+            "datasource": {
+              "type": "prometheus",
+              "uid": "prometheus"
+            },
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "100 * (sum by(route)(rate(lab_http_requests_total{route=~\"/api/.*|/images/.*\",status=~\"5..\"}[1m])) or (sum by(route)(rate(lab_http_requests_total{route=~\"/api/.*|/images/.*\"}[1m])) * 0)) / (sum by(route)(rate(lab_http_requests_total{route=~\"/api/.*|/images/.*\"}[1m])) > 0) and on() (up{job=\"web\"} == 1)",
+                "legendFormat": "{{route}}",
+                "range": true,
+                "instant": false
+              }
+            ]
+          },
+          {
+            "id": 13,
+            "title": "Độ trễ P95 theo thao tác · thấp hơn là tốt hơn",
+            "type": "timeseries",
+            "gridPos": {
+              "x": 0,
+              "y": 20,
+              "w": 12,
+              "h": 8
+            },
+            "description": "P95 ước lượng từ histogram của request đã hoàn tất. Web ngừng phản hồi có thể không có mẫu; không diễn giải khoảng trống là nhanh.",
+            "fieldConfig": {
+              "defaults": {
+                "unit": "s",
+                "noValue": "CHƯA CÓ DỮ LIỆU",
+                "color": {
+                  "mode": "palette-classic"
+                },
+                "custom": {
+                  "drawStyle": "line",
+                  "lineWidth": 2,
+                  "fillOpacity": 12,
+                  "spanNulls": false
+                }
+              },
+              "overrides": []
+            },
+            "options": {
+              "tooltip": {
+                "mode": "multi",
+                "sort": "desc"
+              },
+              "legend": {
+                "displayMode": "table",
+                "placement": "bottom",
+                "calcs": [
+                  "lastNotNull",
+                  "max"
+                ]
+              }
+            },
+            "datasource": {
+              "type": "prometheus",
+              "uid": "prometheus"
+            },
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "histogram_quantile(0.95, sum by(le,route)(rate(lab_http_request_seconds_bucket{route=~\"/api/.*|/images/.*\"}[1m]))) and on() (up{job=\"web\"} == 1)",
+                "legendFormat": "{{route}}",
+                "range": true,
+                "instant": false
+              }
+            ]
+          },
+          {
+            "id": 14,
+            "title": "Pod sẵn sàng theo dịch vụ · tối thiểu 1 mỗi dịch vụ",
+            "type": "bargauge",
+            "gridPos": {
+              "x": 12,
+              "y": 20,
+              "w": 12,
+              "h": 8
+            },
+            "description": "0 màu đỏ, kể cả khi replicas mong muốn bị scale về 0 (F08). Pod xanh vẫn có thể sai địa chỉ Valkey/PostgreSQL.",
+            "fieldConfig": {
+              "defaults": {
+                "unit": "short",
+                "noValue": "CHƯA CÓ DỮ LIỆU",
+                "color": {
+                  "mode": "thresholds"
+                },
+                "custom": {},
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "value": null,
+                      "color": "red"
+                    },
+                    {
+                      "value": 1,
+                      "color": "green"
+                    }
+                  ]
+                },
+                "min": 0,
+                "max": 2,
+                "decimals": 0
+              },
+              "overrides": []
+            },
+            "options": {
+              "orientation": "horizontal",
+              "displayMode": "basic",
+              "showUnfilled": true,
+              "reduceOptions": {
+                "calcs": [
+                  "lastNotNull"
+                ],
+                "values": false,
+                "fields": ""
+              }
+            },
+            "datasource": {
+              "type": "prometheus",
+              "uid": "prometheus"
+            },
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "kube_deployment_status_replicas_available{namespace=\"lab-app\"} and on() (up{job=\"kube-state\"} == 1)",
+                "legendFormat": "{{deployment}}",
+                "range": false,
+                "instant": true
+              }
+            ]
+          },
+          {
+            "id": 15,
+            "title": "Lịch sử Pod sẵn sàng · tìm thời điểm tụt về 0",
+            "type": "timeseries",
+            "gridPos": {
+              "x": 0,
+              "y": 28,
+              "w": 12,
+              "h": 8
+            },
+            "description": "Dùng cùng trục thời gian với HTTP để so sánh trước lỗi, trong lỗi và sau phục hồi.",
+            "fieldConfig": {
+              "defaults": {
+                "unit": "short",
+                "noValue": "CHƯA CÓ DỮ LIỆU",
+                "color": {
+                  "mode": "palette-classic"
+                },
+                "custom": {
+                  "drawStyle": "line",
+                  "lineWidth": 2,
+                  "fillOpacity": 12,
+                  "spanNulls": false
+                }
+              },
+              "overrides": []
+            },
+            "options": {
+              "tooltip": {
+                "mode": "multi",
+                "sort": "desc"
+              },
+              "legend": {
+                "displayMode": "table",
+                "placement": "bottom",
+                "calcs": [
+                  "lastNotNull",
+                  "max"
+                ]
+              }
+            },
+            "datasource": {
+              "type": "prometheus",
+              "uid": "prometheus"
+            },
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "kube_deployment_status_replicas_available{namespace=\"lab-app\",deployment=~\"web|cart|catalog|valkey|postgresql\"} and on() (up{job=\"kube-state\"} == 1)",
+                "legendFormat": "{{deployment}}",
+                "range": true,
+                "instant": false
+              }
+            ]
+          },
+          {
+            "id": 16,
+            "title": "Container restart trong 5 phút",
+            "type": "timeseries",
+            "gridPos": {
+              "x": 12,
+              "y": 28,
+              "w": 12,
+              "h": 8
+            },
+            "description": "Tăng khi container restart trong cùng Pod. Thay thế/xóa Pod không được tính như restart của Pod cũ.",
+            "fieldConfig": {
+              "defaults": {
+                "unit": "short",
+                "noValue": "CHƯA CÓ DỮ LIỆU",
+                "color": {
+                  "mode": "palette-classic"
+                },
+                "custom": {
+                  "drawStyle": "line",
+                  "lineWidth": 2,
+                  "fillOpacity": 12,
+                  "spanNulls": false
+                },
+                "min": 0
+              },
+              "overrides": []
+            },
+            "options": {
+              "tooltip": {
+                "mode": "multi",
+                "sort": "desc"
+              },
+              "legend": {
+                "displayMode": "table",
+                "placement": "bottom",
+                "calcs": [
+                  "lastNotNull",
+                  "max"
+                ]
+              }
+            },
+            "datasource": {
+              "type": "prometheus",
+              "uid": "prometheus"
+            },
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "sum by(container)(increase(kube_pod_container_status_restarts_total{namespace=\"lab-app\"}[5m])) and on() (up{job=\"kube-state\"} == 1)",
+                "legendFormat": "{{container}}",
+                "range": true,
+                "instant": false
+              }
+            ]
+          },
+          {
+            "id": 17,
+            "title": "Pod đang chờ · lý do hiện tại",
+            "type": "table",
+            "gridPos": {
+              "x": 0,
+              "y": 36,
+              "w": 12,
+              "h": 7
+            },
+            "description": "Không có dòng: không thấy container đang chờ, nếu ô thu thập Kubernetes phía trên còn xanh. Đây không phải kiểm tra lỗi nghiệp vụ.",
+            "fieldConfig": {
+              "defaults": {
+                "unit": "short",
+                "noValue": "CHƯA CÓ DỮ LIỆU",
+                "color": {
+                  "mode": "palette-classic"
+                },
+                "custom": {}
+              },
+              "overrides": []
+            },
+            "options": {},
+            "datasource": {
+              "type": "prometheus",
+              "uid": "prometheus"
+            },
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "(kube_pod_container_status_waiting_reason{namespace=\"lab-app\"} == 1) and on() (up{job=\"kube-state\"} == 1)",
+                "legendFormat": "",
+                "range": false,
+                "instant": true,
+                "format": "table"
+              }
+            ],
+            "transformations": [
+              {
+                "id": "organize",
+                "options": {
+                  "excludeByName": {
+                    "Time": true,
+                    "__name__": true,
+                    "instance": true,
+                    "job": true,
+                    "namespace": true,
+                    "uid": true,
+                    "Value": true
+                  },
+                  "renameByName": {
+                    "pod": "Pod",
+                    "container": "Container",
+                    "reason": "Lý do"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "id": 18,
+            "title": "Lần kết thúc container gần nhất · bằng chứng OOM",
+            "type": "table",
+            "gridPos": {
+              "x": 12,
+              "y": 36,
+              "w": 12,
+              "h": 7
+            },
+            "description": "Đây là sự kiện gần nhất của Pod còn tồn tại, không khẳng định lỗi vẫn đang tiếp diễn. OOMKilled giúp investigate F07.",
+            "fieldConfig": {
+              "defaults": {
+                "unit": "short",
+                "noValue": "CHƯA CÓ DỮ LIỆU",
+                "color": {
+                  "mode": "palette-classic"
+                },
+                "custom": {}
+              },
+              "overrides": []
+            },
+            "options": {},
+            "datasource": {
+              "type": "prometheus",
+              "uid": "prometheus"
+            },
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "(kube_pod_container_status_last_terminated_reason{namespace=\"lab-app\"} == 1) and on() (up{job=\"kube-state\"} == 1)",
+                "legendFormat": "",
+                "range": false,
+                "instant": true,
+                "format": "table"
+              }
+            ],
+            "transformations": [
+              {
+                "id": "organize",
+                "options": {
+                  "excludeByName": {
+                    "Time": true,
+                    "__name__": true,
+                    "instance": true,
+                    "job": true,
+                    "namespace": true,
+                    "uid": true,
+                    "Value": true
+                  },
+                  "renameByName": {
+                    "pod": "Pod",
+                    "container": "Container",
+                    "reason": "Lý do"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "id": 19,
+            "title": "HƯỚNG DẪN DEMO · Triệu chứng → điều tra → sửa → xác nhận",
+            "type": "text",
+            "gridPos": {
+              "x": 0,
+              "y": 43,
+              "w": 24,
+              "h": 6
+            },
+            "description": "",
+            "fieldConfig": {
+              "defaults": {
+                "unit": "short",
+                "noValue": "CHƯA CÓ DỮ LIỆU",
+                "color": {
+                  "mode": "palette-classic"
+                },
+                "custom": {}
+              },
+              "overrides": []
+            },
+            "options": {
+              "mode": "markdown",
+              "content": "| Tình huống | Dấu hiệu cần nhìn | Điều tra tiếp |\n|---|---|---|\n| F01 / F02 · Cart không kết nối được | Giỏ hàng đỏ; catalog vẫn có thể xanh; Pod có thể vẫn Ready | Jaeger service `web` / `cart`, log Cart, Service và endpoint |\n| F03 · Catalog mất PostgreSQL | Xem sản phẩm đỏ; giỏ hàng có thể thiếu mẫu vì hành trình dừng sớm | Trace Catalog, log và cấu hình DB |\n| F04 / F07 / F08 · Cart không sẵn sàng | Cart 0 Pod Ready; ImagePull / OOM / replicas 0 | Bảng lý do, Pod events và Deployment |\n| F05 / F06 · Web crash / probe sai | Web mất kết nối metric, HTTP thiếu dữ liệu, Web 0 Pod Ready | Pod events, log và readiness probe |\n\n**Khôi phục operator:** `python lab/tools/faults.py reset --context capstone-aiops-lab` trong repo, với kubeconfig operator. **Demo AI:** giữ lỗi để agent investigate → đề xuất runbook → người duyệt → executor sửa → traffic xác nhận. Dashboard chỉ phản ánh telemetry; không đọc mã lỗi inject hay tự suy đoán nguyên nhân gốc."
+            }
+          }
+        ]
+      }
 workloads:
   otel-collector:
     image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib:0.142.0
