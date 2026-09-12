@@ -32,4 +32,3 @@ Roles currently trust the existing operator for testing. Add the actual AI and e
 F01 was calibrated to recycle web clients because established gRPC connections survived selector changes. F07 uses a 16Mi limit/8Mi request to make OOM reproducible; the original 64Mi assumption was not used. Reset waits for business recovery because Kubernetes readiness can precede gRPC reconnection. F05 is a crashing-entrypoint fixture, not a separately versioned bad image.
 
 A successful run of each case is recorded; repeated-run reliability/load benchmarks and concurrent edits to the same cart have not been established. Default load uses independent sessions and sequential operations. Historical upstream components/workflows remain for provenance but are not part of the lab deployment.
-
