@@ -43,7 +43,8 @@ def patch_for(runbook, target, params, current):
         if isinstance(image, str) and image.startswith(repo + ":") and image != old and len(image) < 512:
             return [{"op": "replace", "path": base + "/image", "value": image}]
     if runbook == "restore-memory" and params == {"memory": "384Mi"} and target == "cart":
-        return [{"op": "replace", "path": base + "/resources/limits/memory", "value": "384Mi"}]
+        return [{"op": "replace", "path": base + "/resources/limits/memory", "value": "384Mi"},
+                {"op": "replace", "path": base + "/resources/requests/memory", "value": "64Mi"}]
     if runbook == "restore-probe" and target == "web" and params == {"path": "/healthz"}:
         return [{"op": "replace", "path": base + "/readinessProbe/httpGet/path", "value": "/healthz"}]
     if runbook == "restore-command" and target == "web" and params == {}:

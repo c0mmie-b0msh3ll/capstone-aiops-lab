@@ -66,3 +66,15 @@ Không tự đoán known-good image: dùng inventory deployment/image và bằng
 - AI đề xuất đúng selector; operator duyệt; executor sửa; journey phục hồi.
 - Approval bị sửa, hết hạn, replay hoặc sai cluster bị từ chối.
 - Ground truth và operator audit nằm ngoài quyền của AI; user/source credentials có quyền admin không được đưa vào runtime AI.
+
+
+## Deployment hiện tại
+
+Account `589077667575`, region `us-east-1`, cluster/context `capstone-aiops-lab`.
+
+- Investigator: `arn:aws:iam::589077667575:role/capstone-aiops-lab-investigator`
+- Remediator: `arn:aws:iam::589077667575:role/capstone-aiops-lab-remediator`
+
+Hai role hiện trust **chỉ operator hiện tại** để kiểm thử tích hợp. Team AI cần cung cấp principal ARN để thêm vào `ai_principal_arns`; executor identity thêm riêng vào `executor_principal_arns`. Không đưa profile admin đang có trên máy cho AI. Kubeconfig investigator và executor dùng **cùng alias cluster** nhưng nằm trong file/process riêng, vì approval gắn với context. CLI `auth can-i` cho subresource nên dùng `--subresource=portforward` hoặc `--subresource=exec`.
+
+Operator có thể chạy test toàn bộ bằng `python lab/tools/acceptance.py --context capstone-aiops-lab --cases F01 F02 F03 F04 F05 F06 F07 F08 --confirm-test-actions`. Đây là test tự động có đáp án và chữ ký test, **không phải** lượt AI investigation/human approval. Dùng `--executor-kubeconfig PATH` để kiểm chứng write thực sự qua role remediator. State/đáp án ở `.lab-state/acceptance`, không cấp cho agent.

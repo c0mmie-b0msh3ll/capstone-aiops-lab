@@ -76,7 +76,7 @@ Chỉ inject một case tại một thời điểm. `faults.py` là công cụ o
 | F04 | Image Cart không tồn tại | restore-image |
 | F05 | Web entrypoint crash (fixture mô phỏng bad release) | restore-command |
 | F06 | Readiness path Web sai | restore-probe |
-| F07 | Limit Cart 64Mi dưới working set | restore-memory |
+| F07 | Limit Cart 16Mi, request 8Mi (ép OOM lúc khởi động) | restore-memory |
 | F08 | Replica Cart về 0 | set-replicas |
 
 F07 chỉ được tính OOM scenario khi `lastState.terminated.reason=OOMKilled`; nếu runtime tự abort hoặc lỗi khác thì báo unsupported/khác loại, không chấm nhầm. F05 là fixture command crash, chưa phải một image release riêng. Tắt HPA/auto-remediation trong MVP để tránh hệ thống khác sửa hộ.
@@ -90,3 +90,5 @@ Khi kết thúc dùng lab: uninstall hai Helm release, xóa PVC lab và chờ EB
 ## Kiểm chứng
 
 `python -m pytest lab/tests -q`; `helm lint lab/charts/lab -f lab/app-values.yaml`; lint tương tự với `observe-values.yaml`; `terraform validate`. Smoke qua HTTP phải chạy trên deployment thực tế. Xem `VALIDATION.md` để biết chính xác những gì đã kiểm tra; không suy ra tất cả fault đã pass từ unit tests.
+
+F01 đổi selector và recycle web client Pods để loại kết nối gRPC cũ; chỉ tính lỗi khi Catalog vẫn trả thành công nhưng Cart thất bại. F07 chờ bằng chứng OOMKilled trước khi báo inject thành công.

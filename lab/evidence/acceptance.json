@@ -1,0 +1,112 @@
+{
+  "date": "2026-09-12",
+  "environment": "EKS capstone-aiops-lab, us-east-1",
+  "test_type": "known-scenario operator acceptance; not an AI evaluation or a human approval session",
+  "cases": [
+    {
+      "case": "F01",
+      "status": "passed",
+      "duration_seconds": 48.6,
+      "action_id": "a1c00820-b405-4a12-aef4-e0d2e3d27cb6",
+      "verification": {
+        "status": "passed",
+        "duration": 0.35148807699999907
+      },
+      "observed_container_reasons": [],
+      "executor_identity": "operator automated test"
+    },
+    {
+      "case": "F02",
+      "status": "passed",
+      "duration_seconds": 63.3,
+      "action_id": "6fa62eae-f07c-4c28-8575-f36cfc7a6c24",
+      "verification": {
+        "status": "passed",
+        "duration": 0.5536041110000269
+      },
+      "observed_container_reasons": [],
+      "executor_identity": "operator automated test"
+    },
+    {
+      "case": "F03",
+      "status": "passed",
+      "duration_seconds": 32.4,
+      "action_id": "1b656532-765a-4a2f-a05a-d22bb6e20f31",
+      "verification": {
+        "status": "passed",
+        "duration": 0.53793323900004
+      },
+      "observed_container_reasons": [
+        "Error"
+      ],
+      "executor_identity": "operator automated test"
+    },
+    {
+      "case": "F04",
+      "status": "passed",
+      "duration_seconds": 56.8,
+      "action_id": "5667a6cb-4165-4189-825a-158b9b064ee1",
+      "verification": {
+        "status": "passed",
+        "duration": 1.0958348809999734
+      },
+      "observed_container_reasons": [
+        "ErrImagePull"
+      ],
+      "executor_identity": "operator automated test"
+    },
+    {
+      "case": "F05",
+      "status": "passed",
+      "duration_seconds": 44.9,
+      "action_id": "4f3ec19d-0e25-4b68-8e83-2c6c2515ea95",
+      "verification": {
+        "status": "passed",
+        "duration": 0.7820020730000579
+      },
+      "observed_container_reasons": [
+        "Error"
+      ],
+      "executor_identity": "operator automated test"
+    },
+    {
+      "case": "F06",
+      "status": "passed",
+      "duration_seconds": 46.5,
+      "action_id": "f049c6c1-1064-4423-80bb-929358689629",
+      "verification": {
+        "status": "passed",
+        "duration": 0.5198673600000348
+      },
+      "observed_container_reasons": [],
+      "executor_identity": "operator automated test"
+    },
+    {
+      "case": "F07",
+      "status": "passed",
+      "duration_seconds": 65.5,
+      "action_id": "0f6b7985-dda5-49ec-ac49-5c9abcc80ce1",
+      "verification": {
+        "status": "passed",
+        "duration": 0.8589132140000402
+      },
+      "observed_container_reasons": [
+        "CrashLoopBackOff",
+        "OOMKilled"
+      ],
+      "executor_identity": "operator automated test"
+    },
+    {
+      "case": "F08",
+      "status": "passed",
+      "duration_seconds": 41.6,
+      "action_id": "d225a187-2dbc-4fb8-a3b9-33aac5ac761a",
+      "verification": {
+        "status": "passed",
+        "duration": 1.3501358820000178
+      },
+      "observed_container_reasons": [],
+      "executor_identity": "remediator AssumeRole"
+    }
+  ]
+}

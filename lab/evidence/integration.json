@@ -1,0 +1,22 @@
+{
+  "metrics_series": 6,
+  "trace_services": [
+    "catalog",
+    "image-provider",
+    "cart",
+    "web"
+  ],
+  "web_traces": 3,
+  "grafana_dashboard": "lab-health",
+  "rbac": {
+    "investigator_get_pods": true,
+    "investigator_patch_deployments": false,
+    "investigator_get_secrets": false,
+    "investigator_exec": false,
+    "investigator_portforward_observe": true,
+    "investigator_top_pods": true,
+    "remediator_patch_cart_service": true,
+    "remediator_patch_cart_deployment": true,
+    "remediator_patch_kube_system": false
+  }
+}

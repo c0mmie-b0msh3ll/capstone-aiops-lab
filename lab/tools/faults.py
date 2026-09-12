@@ -43,7 +43,7 @@ def changes(case, obj):
     if case == "F04": return [op(base+"/image", container["image"].rsplit(":",1)[0]+":missing-"+uuid.uuid4().hex[:8])]
     if case == "F05": return [{"op":"add","path":base+"/command","value":["python","-c","raise SystemExit('bad-release fixture')"]}]
     if case == "F06": return [op(base+"/readinessProbe/httpGet/path", "/invalid-ready")]
-    if case == "F07": return [op(base+"/resources/limits/memory", "64Mi")]
+    if case == "F07": return [op(base+"/resources/limits/memory", "16Mi"), op(base+"/resources/requests/memory", "8Mi")]
     raise ValueError(case)
 
 if __name__ == "__main__":
@@ -66,6 +66,20 @@ if __name__ == "__main__":
                   "name": name, "uid": current["metadata"]["uid"], "before_spec": current["spec"], "started_at": time.time()}
         active.write_text(json.dumps(record, indent=2), encoding="utf-8")
         patch(args.context, kind, name, [{"op":"test","path":"/metadata/resourceVersion","value":current["metadata"]["resourceVersion"]}]+changes(args.case,current))
+        if args.case == "F01":
+            # Existing gRPC TCP connections survive an EndpointSlice change.
+            # Recycle only the web client Pods (no spec changes) to test new connections.
+            subprocess.run(["kubectl", "--context", args.context, "-n", "lab-app", "delete", "pods", "-l", "app=web", "--wait=false"], check=True, capture_output=True, text=True)
+        if args.case == "F07":
+            deadline = time.time() + 90
+            while True:
+                pods = k(args.context, "get", "pods", "-l", "app=cart", "-o", "json")
+                states = [s for pod in pods["items"] for s in pod.get("status", {}).get("containerStatuses", [])]
+                if any(s.get("lastState", {}).get("terminated", {}).get("reason") == "OOMKilled" or s.get("state", {}).get("terminated", {}).get("reason") == "OOMKilled" for s in states):
+                    break
+                if time.time() > deadline:
+                    raise SystemExit("OOMKilled not observed; reset this case before retrying")
+                time.sleep(3)
         print("Injected; verify business symptoms and Kubernetes evidence before scoring. State:", active)
     else:
         record = json.loads(active.read_text(encoding="utf-8"))

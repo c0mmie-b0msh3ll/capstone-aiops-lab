@@ -1,3 +1,5 @@
+-- Copyright The OpenTelemetry Authors
+-- SPDX-License-Identifier: Apache-2.0
 -- Derived from upstream catalog seed. Lab database owner is supplied by Secret.
 CREATE SCHEMA catalog;
 

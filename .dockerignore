@@ -1,0 +1,11 @@
+.git
+.lab-state
+.local-tools
+**/.terraform
+**/*.tfstate*
+**/*.tfvars*
+**/*.tfplan
+**/*.key
+**/.env
+**/__pycache__
+lab/generated
