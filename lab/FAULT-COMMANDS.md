@@ -248,3 +248,27 @@ Không chạy Helm upgrade/deploy để dọn lỗi trong lúc demo; nó có th�
 Khi muốn quan sát AI xử lý, giữ lỗi active, chưa chạy reset. Sau khi AI hoàn tất và đã ghi nhận kết quả, operator reset để đóng case và chuẩn bị demo tiếp.
 
 Hợp đồng tích hợp agent và luồng approve/executor: [INTEGRATION.md](INTEGRATION.md).
+
+## 10. Bật cả bốn trang bằng một lệnh (tự kết nối lại)
+
+Dùng PowerShell 7. Script chạy nền trên Windows và mở các cổng chỉ trên loopback 127.0.0.1.
+
+```powershell
+cd E:\capstone-aiops-lab
+.\lab\port-forwards.ps1 -Action start
+.\lab\port-forwards.ps1 -Action status
+```
+
+Tắt các tunnel do script quản lý:
+
+```powershell
+.\lab\port-forwards.ps1 -Action stop
+```
+
+Script tự khởi động lại tiến trình port-forward bị thoát, kiểm tra mỗi vòng khoảng 5 giây. Không reset lỗi, không restart Pod và không đóng listener đã có từ trước. Khi Web đang crash, tự kết nối lại không thể làm ứng dụng khỏe; vẫn cần xử lý lỗi hoặc reset.
+
+`kubectl port-forward` không có thời hạn mặc định kiểu 15/30/60 phút. `--pod-running-timeout` là thời gian chờ Pod lúc bắt đầu, không phải thời hạn tunnel. Tunnel có thể ngắt khi Pod được chọn kết thúc, mạng đứt hoặc tiến trình bị đóng. Script chỉ khôi phục khi tiến trình tunnel thoát; không thay thế kiểm tra HTTP/traffic.
+
+Sau khi khởi động lại Windows cần chạy `start` lại. Phiên AWS phải còn dùng được và máy phải có mạng; script không tự đăng nhập AWS. Log chẩn đoán nằm trong `.lab-state/port-forwards/`.
+
+Đã kiểm tra: bốn endpoint Web/Grafana/Jaeger/Prometheus trả HTTP 200; chủ động dừng riêng tunnel Jaeger do script tạo và xác nhận nó được mở lại bằng tiến trình mới.
