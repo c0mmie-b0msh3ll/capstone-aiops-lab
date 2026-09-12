@@ -1,0 +1,62 @@
+{{- if .Values.labRbac }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata: {name: investigator}
+rules:
+  - apiGroups: [""]
+    resources: [pods, pods/log, services, endpoints, events, persistentvolumeclaims]
+    verbs: [get, list, watch]
+  - apiGroups: [apps]
+    resources: [deployments, replicasets, statefulsets]
+    verbs: [get, list, watch]
+  - apiGroups: [discovery.k8s.io]
+    resources: [endpointslices]
+    verbs: [get, list, watch]
+  - apiGroups: [metrics.k8s.io]
+    resources: [pods]
+    verbs: [get, list]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata: {name: investigator}
+subjects: [{kind: Group, name: 'lab:investigator', apiGroup: rbac.authorization.k8s.io}]
+roleRef: {kind: Role, name: investigator, apiGroup: rbac.authorization.k8s.io}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata: {name: remediator}
+rules:
+  - apiGroups: [apps]
+    resources: [deployments]
+    resourceNames: [cart, catalog, web]
+    verbs: [get, patch]
+  - apiGroups: [""]
+    resources: [services]
+    resourceNames: [cart]
+    verbs: [get, patch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata: {name: remediator}
+subjects: [{kind: Group, name: 'lab:remediator', apiGroup: rbac.authorization.k8s.io}]
+roleRef: {kind: Role, name: remediator, apiGroup: rbac.authorization.k8s.io}
+{{- end }}
+{{- if .Values.telemetryRbac }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata: {name: telemetry-reader}
+rules:
+  - apiGroups: [""]
+    resources: [pods, services]
+    verbs: [get, list]
+  - apiGroups: [""]
+    resources: [pods/portforward]
+    verbs: [create]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata: {name: telemetry-reader}
+subjects: [{kind: Group, name: 'lab:investigator', apiGroup: rbac.authorization.k8s.io}]
+roleRef: {kind: Role, name: telemetry-reader, apiGroup: rbac.authorization.k8s.io}
+{{- end }}

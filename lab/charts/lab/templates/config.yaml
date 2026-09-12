@@ -1,0 +1,27 @@
+{{- range $name, $data := .Values.configMaps }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata: {name: {{ $name }}}
+data: {{ toYaml $data | nindent 2 }}
+{{- end }}
+{{- if .Values.catalogSeed }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata: {name: catalog-seed}
+data:
+  init.sql: |
+{{ .Files.Get "files/init.sql" | indent 4 }}
+{{- end }}
+{{- range $name, $pvc := .Values.pvcs }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata: {name: {{ $name }}}
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: {{ $.Values.storageClass }}
+  resources:
+    requests: {storage: {{ $pvc }}}
+{{- end }}

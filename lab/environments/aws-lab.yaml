@@ -1,0 +1,11 @@
+workloads:
+  cart:
+    image: 589077667575.dkr.ecr.us-east-1.amazonaws.com/capstone-aiops-lab/cart:lab-v1
+  catalog:
+    image: 589077667575.dkr.ecr.us-east-1.amazonaws.com/capstone-aiops-lab/catalog:lab-v1
+  image-provider:
+    image: 589077667575.dkr.ecr.us-east-1.amazonaws.com/capstone-aiops-lab/image-provider:lab-v1
+  load-generator:
+    image: 589077667575.dkr.ecr.us-east-1.amazonaws.com/capstone-aiops-lab/web:lab-v2
+  web:
+    image: 589077667575.dkr.ecr.us-east-1.amazonaws.com/capstone-aiops-lab/web:lab-v2

@@ -1,3 +1,11 @@
+# Capstone AIOps Lab
+
+Bản lab rút gọn: xem [lab/README.md](lab/README.md), [AI integration](lab/INTEGRATION.md).
+
+Phần bên dưới là README upstream để tham khảo; không dùng pipeline cũ để deploy lab.
+
+---
+
 # Phase 3 - TechX Corp Service Takeover
 
 Chào mừng đến Phase 3. Đây là vòng cuối: các bạn **tiếp quản một sản phẩm AI đang chạy** của TechX Corp - một storefront thương mại điện tử gồm nhiều microservice trên Kubernetes, có hàng đợi, cơ sở dữ liệu, một tính năng AI tóm tắt review, và đầy đủ observability. Hệ thống này **đang sống và chưa hoàn hảo**: có chỗ chưa tối ưu về chi phí, bảo mật, độ tin cậy, khả năng mở rộng và truy vết.

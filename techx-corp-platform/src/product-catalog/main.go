@@ -31,7 +31,6 @@ import (
 	"time"
 
 	_ "github.com/lib/pq"
-	"go.opentelemetry.io/contrib/bridges/otelslog"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/contrib/instrumentation/runtime"
 	"go.opentelemetry.io/otel"
@@ -77,7 +76,7 @@ var (
 )
 
 func init() {
-	logger = otelslog.NewLogger("product-catalog")
+	logger = slog.New(slog.NewJSONHandler(os.Stdout, nil))
 }
 
 func initResource() *sdkresource.Resource {

@@ -31,6 +31,12 @@ public class CartService : Oteldemo.CartService.CartServiceBase
         _admission = admission;
     }
 
+    public override async Task<Cart> RemoveItem(RemoveItemRequest request, ServerCallContext context)
+    {
+        using var lease = await _admission.AcquireAsync(context.CancellationToken);
+        return await _cartStore.RemoveItemAsync(request.UserId, request.ProductId);
+    }
+
     public override async Task<Empty> AddItem(AddItemRequest request, ServerCallContext context)
     {
         using var admissionLease = await _admission.AcquireAsync(context.CancellationToken);

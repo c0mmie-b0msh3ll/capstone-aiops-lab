@@ -78,3 +78,10 @@ Jira_Agent_Week2_Package/
 aiops/remediation/audit_log.jsonl
 \n# Playwright MCP\n.playwright-mcp/
 .playwright-mcp/
+
+# AIOps lab local state and tools
+.lab-state/
+.local-tools/
+lab/generated/
+lab/**/*.db
+lab/**/*.key

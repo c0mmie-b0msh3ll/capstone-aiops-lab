@@ -1,0 +1,198 @@
+storageClass: lab-gp3
+catalogSeed: false
+labRbac: false
+telemetryRbac: true
+pvcs:
+  prometheus: 2Gi
+configMaps:
+  collector:
+    config.yaml: "exporters:\n  debug:\n    verbosity: basic\n  otlp/jaeger:\n   \
+      \ endpoint: jaeger:4317\n    tls:\n      insecure: true\n  prometheus:\n   \
+      \ endpoint: 0.0.0.0:8889\n    resource_to_telemetry_conversion:\n      enabled:\
+      \ true\nextensions:\n  health_check:\n    endpoint: 0.0.0.0:13133\nprocessors:\n\
+      \  batch: {}\n  memory_limiter:\n    check_interval: 1s\n    limit_mib: 350\n\
+      \    spike_limit_mib: 80\nreceivers:\n  otlp:\n    protocols:\n      grpc:\n\
+      \        endpoint: 0.0.0.0:4317\n      http:\n        endpoint: 0.0.0.0:4318\n\
+      service:\n  extensions:\n  - health_check\n  pipelines:\n    logs:\n      exporters:\n\
+      \      - debug\n      processors:\n      - memory_limiter\n      - batch\n \
+      \     receivers:\n      - otlp\n    metrics:\n      exporters:\n      - prometheus\n\
+      \      processors:\n      - memory_limiter\n      - batch\n      receivers:\n\
+      \      - otlp\n    traces:\n      exporters:\n      - otlp/jaeger\n      processors:\n\
+      \      - memory_limiter\n      - batch\n      receivers:\n      - otlp\n"
+  jaeger:
+    config.yaml: "exporters:\n  jaeger_storage_exporter:\n    trace_storage: memory_backend\n\
+      extensions:\n  jaeger_query:\n    storage:\n      traces: memory_backend\n \
+      \ jaeger_storage:\n    backends:\n      memory_backend:\n        memory:\n \
+      \         max_traces: 10000\nprocessors:\n  batch: {}\nreceivers:\n  otlp:\n\
+      \    protocols:\n      grpc:\n        endpoint: 0.0.0.0:4317\nservice:\n  extensions:\n\
+      \  - jaeger_storage\n  - jaeger_query\n  pipelines:\n    traces:\n      exporters:\n\
+      \      - jaeger_storage_exporter\n      processors:\n      - batch\n      receivers:\n\
+      \      - otlp\n"
+  prometheus:
+    config.yaml: "global:\n  evaluation_interval: 10s\n  scrape_interval: 10s\nscrape_configs:\n\
+      - job_name: web\n  static_configs:\n  - targets:\n    - web.lab-app:8080\n-\
+      \ job_name: otel\n  static_configs:\n  - targets:\n    - otel-collector:8889\n\
+      - job_name: kube-state\n  static_configs:\n  - targets:\n    - kube-state-metrics:8080\n"
+  grafana-datasources:
+    datasources.yaml: "apiVersion: 1\ndatasources:\n- isDefault: true\n  name: Prometheus\n\
+      \  type: prometheus\n  uid: prometheus\n  url: http://prometheus:9090\n- name:\
+      \ Jaeger\n  type: jaeger\n  uid: jaeger\n  url: http://jaeger:16686\n"
+  grafana-providers:
+    providers.yaml: "apiVersion: 1\nproviders:\n- name: lab\n  options:\n    path:\
+      \ /dashboards\n"
+  grafana-dashboards:
+    lab.json: '{"title": "AIOps Lab \u2014 Service Health", "uid": "lab-health", "schemaVersion":
+      39, "version": 1, "refresh": "10s", "time": {"from": "now-15m", "to": "now"},
+      "panels": [{"id": 1, "title": "Request rate", "type": "timeseries", "datasource":
+      {"type": "prometheus", "uid": "prometheus"}, "gridPos": {"x": 0, "y": 0, "w":
+      12, "h": 9}, "targets": [{"expr": "sum by (route) (rate(lab_http_requests_total[1m]))",
+      "refId": "A"}]}, {"id": 2, "title": "Server errors", "type": "timeseries", "datasource":
+      {"type": "prometheus", "uid": "prometheus"}, "gridPos": {"x": 12, "y": 0, "w":
+      12, "h": 9}, "targets": [{"expr": "sum by (route) (rate(lab_http_requests_total{status=~\"5..\"}[1m]))",
+      "refId": "A"}]}, {"id": 3, "title": "P95 latency", "type": "timeseries", "datasource":
+      {"type": "prometheus", "uid": "prometheus"}, "gridPos": {"x": 0, "y": 9, "w":
+      12, "h": 9}, "targets": [{"expr": "histogram_quantile(0.95, sum by (le,route)
+      (rate(lab_http_request_seconds_bucket[1m])))", "refId": "A"}]}, {"id": 4, "title":
+      "Container restarts", "type": "timeseries", "datasource": {"type": "prometheus",
+      "uid": "prometheus"}, "gridPos": {"x": 12, "y": 9, "w": 12, "h": 9}, "targets":
+      [{"expr": "kube_pod_container_status_restarts_total{namespace=\"lab-app\"}",
+      "refId": "A"}]}]}'
+workloads:
+  otel-collector:
+    image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib:0.142.0
+    replicas: 1
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    ports:
+    - name: service
+      containerPort: 4317
+    - name: otlp-http
+      containerPort: 4318
+    - name: metrics
+      containerPort: 8889
+    args:
+    - --config=/conf/config.yaml
+    readinessProbe:
+      httpGet:
+        path: /
+        port: 13133
+    volumeMounts:
+    - name: config
+      mountPath: /conf
+    volumes:
+    - name: config
+      configMap:
+        name: collector
+  jaeger:
+    image: jaegertracing/jaeger:2.12.0
+    replicas: 1
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    ports:
+    - name: service
+      containerPort: 16686
+    - name: otlp
+      containerPort: 4317
+    args:
+    - --config=/conf/config.yaml
+    volumeMounts:
+    - name: config
+      mountPath: /conf
+    volumes:
+    - name: config
+      configMap:
+        name: jaeger
+  prometheus:
+    image: quay.io/prometheus/prometheus:v3.8.1
+    replicas: 1
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 500m
+        memory: 768Mi
+    ports:
+    - name: service
+      containerPort: 9090
+    args:
+    - --config.file=/conf/config.yaml
+    - --storage.tsdb.path=/prometheus
+    - --storage.tsdb.retention.time=2d
+    - --storage.tsdb.retention.size=1GB
+    podSecurityContext:
+      fsGroup: 65534
+    readinessProbe:
+      httpGet:
+        path: /-/ready
+        port: 9090
+    volumeMounts:
+    - name: config
+      mountPath: /conf
+    - name: data
+      mountPath: /prometheus
+    volumes:
+    - name: config
+      configMap:
+        name: prometheus
+    - name: data
+      persistentVolumeClaim:
+        claimName: prometheus
+  grafana:
+    image: grafana/grafana:12.3.1
+    replicas: 1
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 500m
+        memory: 256Mi
+    ports:
+    - name: service
+      containerPort: 3000
+    env:
+    - name: GF_AUTH_ANONYMOUS_ENABLED
+      value: 'true'
+    - name: GF_AUTH_ANONYMOUS_ORG_ROLE
+      value: Viewer
+    - name: GF_USERS_ALLOW_SIGN_UP
+      value: 'false'
+    - name: GF_SECURITY_ADMIN_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: grafana-admin
+          key: password
+    podSecurityContext:
+      fsGroup: 472
+    volumeMounts:
+    - name: datasources
+      mountPath: /etc/grafana/provisioning/datasources
+    - name: providers
+      mountPath: /etc/grafana/provisioning/dashboards
+    - name: dashboards
+      mountPath: /dashboards
+    - name: data
+      mountPath: /var/lib/grafana
+    volumes:
+    - name: datasources
+      configMap:
+        name: grafana-datasources
+    - name: providers
+      configMap:
+        name: grafana-providers
+    - name: dashboards
+      configMap:
+        name: grafana-dashboards
+    - name: data
+      emptyDir: {}

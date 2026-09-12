@@ -1,0 +1,7 @@
+workloads: {}
+configMaps: {}
+pvcs: {}
+catalogSeed: false
+labRbac: false
+telemetryRbac: false
+storageClass: lab-gp3

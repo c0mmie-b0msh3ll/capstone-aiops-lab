@@ -1,0 +1,285 @@
+storageClass: lab-gp3
+catalogSeed: true
+labRbac: true
+telemetryRbac: false
+pvcs:
+  postgresql: 2Gi
+  valkey: 1Gi
+configMaps:
+  flags:
+    flags.json: '{"flags": {}}'
+workloads:
+  web:
+    image: capstone-lab-web:dev
+    replicas: 1
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 500m
+        memory: 256Mi
+    ports:
+    - name: http
+      containerPort: 8080
+    env:
+    - name: OTEL_EXPORTER_OTLP_ENDPOINT
+      value: http://otel-collector.lab-observe:4317
+    - name: OTEL_EXPORTER_OTLP_INSECURE
+      value: 'true'
+    - name: OTEL_EXPORTER_OTLP_PROTOCOL
+      value: grpc
+    - name: OTEL_METRIC_EXPORT_INTERVAL
+      value: '10000'
+    - name: FLAGD_HOST
+      value: flagd
+    - name: FLAGD_PORT
+      value: '8013'
+    - name: CATALOG_ADDR
+      value: catalog:3550
+    - name: CART_ADDR
+      value: cart:7070
+    - name: OTEL_SERVICE_NAME
+      value: web
+    readinessProbe:
+      httpGet:
+        path: /healthz
+        port: 8080
+    livenessProbe:
+      httpGet:
+        path: /healthz
+        port: 8080
+      initialDelaySeconds: 20
+  catalog:
+    image: capstone-lab-catalog:dev
+    replicas: 1
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 500m
+        memory: 256Mi
+    ports:
+    - name: service
+      containerPort: 3550
+    env:
+    - name: OTEL_EXPORTER_OTLP_ENDPOINT
+      value: http://otel-collector.lab-observe:4317
+    - name: OTEL_EXPORTER_OTLP_INSECURE
+      value: 'true'
+    - name: OTEL_EXPORTER_OTLP_PROTOCOL
+      value: grpc
+    - name: OTEL_METRIC_EXPORT_INTERVAL
+      value: '10000'
+    - name: FLAGD_HOST
+      value: flagd
+    - name: FLAGD_PORT
+      value: '8013'
+    - name: PRODUCT_CATALOG_PORT
+      value: '3550'
+    - name: OTEL_SERVICE_NAME
+      value: catalog
+    - name: CATALOG_SCHEMA_PHASE
+      value: read_new
+    - name: SEMANTIC_SEARCH_ENABLED
+      value: 'false'
+    - name: DB_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: lab-db
+          key: password
+    - name: DB_CONNECTION_STRING
+      value: postgres://lab:$(DB_PASSWORD)@postgresql:5432/lab?sslmode=disable
+    readinessProbe:
+      grpc:
+        port: 3550
+  cart:
+    image: capstone-lab-cart:dev
+    replicas: 1
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 500m
+        memory: 384Mi
+    ports:
+    - name: service
+      containerPort: 7070
+    env:
+    - name: OTEL_EXPORTER_OTLP_ENDPOINT
+      value: http://otel-collector.lab-observe:4317
+    - name: OTEL_EXPORTER_OTLP_INSECURE
+      value: 'true'
+    - name: OTEL_EXPORTER_OTLP_PROTOCOL
+      value: grpc
+    - name: OTEL_METRIC_EXPORT_INTERVAL
+      value: '10000'
+    - name: FLAGD_HOST
+      value: flagd
+    - name: FLAGD_PORT
+      value: '8013'
+    - name: CART_PORT
+      value: '7070'
+    - name: ASPNETCORE_URLS
+      value: http://*:7070
+    - name: VALKEY_ADDR
+      value: valkey:6379
+    - name: OTEL_SERVICE_NAME
+      value: cart
+    readinessProbe:
+      grpc:
+        port: 7070
+        service: readiness
+    livenessProbe:
+      grpc:
+        port: 7070
+        service: liveness
+      initialDelaySeconds: 30
+  image-provider:
+    image: capstone-lab-image-provider:dev
+    replicas: 1
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 500m
+        memory: 256Mi
+    ports:
+    - name: http
+      containerPort: 8080
+    env:
+    - name: IMAGE_PROVIDER_PORT
+      value: '8080'
+    - name: OTEL_COLLECTOR_HOST
+      value: otel-collector.lab-observe
+    - name: OTEL_COLLECTOR_PORT_GRPC
+      value: '4317'
+    - name: OTEL_SERVICE_NAME
+      value: image-provider
+    readinessProbe:
+      httpGet:
+        path: /status
+        port: 8080
+  postgresql:
+    image: postgres:17.6
+    replicas: 1
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    ports:
+    - name: service
+      containerPort: 5432
+    env:
+    - name: POSTGRES_USER
+      value: lab
+    - name: POSTGRES_DB
+      value: lab
+    - name: PGDATA
+      value: /var/lib/postgresql/data/pgdata
+    - name: POSTGRES_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: lab-db
+          key: password
+    readinessProbe:
+      exec:
+        command:
+        - pg_isready
+        - -U
+        - lab
+        - -d
+        - lab
+    volumeMounts:
+    - name: data
+      mountPath: /var/lib/postgresql/data
+    - name: seed
+      mountPath: /docker-entrypoint-initdb.d
+    volumes:
+    - name: data
+      persistentVolumeClaim:
+        claimName: postgresql
+    - name: seed
+      configMap:
+        name: catalog-seed
+  valkey:
+    image: valkey/valkey:9.0.1-alpine3.23
+    replicas: 1
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 500m
+        memory: 256Mi
+    ports:
+    - name: service
+      containerPort: 6379
+    args:
+    - valkey-server
+    - --appendonly
+    - 'yes'
+    - --maxmemory
+    - 128mb
+    - --maxmemory-policy
+    - noeviction
+    readinessProbe:
+      exec:
+        command:
+        - valkey-cli
+        - ping
+    volumeMounts:
+    - name: data
+      mountPath: /data
+    volumes:
+    - name: data
+      persistentVolumeClaim:
+        claimName: valkey
+  flagd:
+    image: ghcr.io/open-feature/flagd:v0.12.9
+    replicas: 1
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 500m
+        memory: 128Mi
+    ports:
+    - name: service
+      containerPort: 8013
+    args:
+    - start
+    - --uri
+    - file:/etc/flagd/flags.json
+    volumeMounts:
+    - name: flags
+      mountPath: /etc/flagd
+    volumes:
+    - name: flags
+      configMap:
+        name: flags
+  load-generator:
+    image: capstone-lab-web:dev
+    replicas: 1
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 500m
+        memory: 128Mi
+    command:
+    - python
+    - /app/tools/traffic.py
+    - --url
+    - http://web:8080
+    - --loop
+    - --interval
+    - '3'

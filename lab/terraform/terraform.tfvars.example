@@ -1,0 +1,6 @@
+account_id          = "589077667575"
+region              = "us-east-1"
+admin_principal_arn = "arn:aws:iam::589077667575:user/dinhdanhnam-admin"
+allowed_cidrs       = ["203.0.113.10/32"] # Replace with your actual public egress IP.
+ai_principal_arns       = [] # Add exact local developer IAM principal later.
+executor_principal_arns = [] # Separate trusted executor identity; not the agent's read identity.

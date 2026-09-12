@@ -56,10 +56,8 @@ builder.Services.AddOpenFeature(openFeatureBuilder =>
         .AddHook<TraceEnricherHook>();
 });
 
-// Check if running in dedicated Kafka Consumer Worker mode
-// If ENABLE_KAFKA_CONSUMER is set to "true", this pod operates purely as a worker
-var enableConsumer = builder.Configuration["ENABLE_KAFKA_CONSUMER"];
-bool isWorker = string.Equals(enableConsumer, "true", StringComparison.OrdinalIgnoreCase);
+// Lab serves synchronous gRPC only.
+bool isWorker = false;
 
 // Register CartService and admission control only when NOT running as a pure worker pod
 // Worker pods only consume Kafka messages via ConsumerService (using ICartStore) and do not need CartService
@@ -123,16 +121,6 @@ builder.Services.AddGrpcHealthChecks()
     .AddCheck<readinessCheck>("readiness");
 
 builder.Services.AddSingleton<HealthServiceImpl>();
-
-// If ENABLE_KAFKA_CONSUMER is set to "false", the background service is not registered, meaning the Kafka consumer worker won't run
-// If it is missing or set to anything other than "false", the Kafka consumer starts automatically when the app launches
-if (!string.Equals(enableConsumer, "false", StringComparison.OrdinalIgnoreCase)) {
-
-    // builder.Services.AddHostedService<T>()
-    // is an extension method in .NET Core
-    // used to register long-running background tasks in the Dependency Injection container
-    builder.Services.AddHostedService<ConsumerService>();
-}
 
 var app = builder.Build();
 

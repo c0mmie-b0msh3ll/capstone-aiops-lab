@@ -1,0 +1,68 @@
+{{- range $name, $w := .Values.workloads }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+  labels: {app: {{ $name }}, lab: aiops}
+spec:
+  replicas: {{ $w.replicas | default 1 }}
+  revisionHistoryLimit: 5
+  strategy: {type: Recreate}
+  selector:
+    matchLabels: {app: {{ $name }}}
+  template:
+    metadata:
+      labels: {app: {{ $name }}, lab: aiops}
+    spec:
+      automountServiceAccountToken: false
+      {{- with $w.podSecurityContext }}
+      securityContext: {{ toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ $name }}
+          image: {{ $w.image | quote }}
+          imagePullPolicy: IfNotPresent
+          {{- with $w.command }}
+          command: {{ toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with $w.args }}
+          args: {{ toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with $w.env }}
+          env: {{ toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with $w.ports }}
+          ports: {{ toYaml . | nindent 12 }}
+          {{- end }}
+          resources: {{ toYaml $w.resources | nindent 12 }}
+          {{- with $w.readinessProbe }}
+          readinessProbe: {{ toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with $w.livenessProbe }}
+          livenessProbe: {{ toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with $w.volumeMounts }}
+          volumeMounts: {{ toYaml . | nindent 12 }}
+          {{- end }}
+      {{- with $w.volumes }}
+      volumes: {{ toYaml . | nindent 8 }}
+      {{- end }}
+{{- if $w.ports }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  labels: {app: {{ $name }}, lab: aiops}
+spec:
+  type: ClusterIP
+  selector: {app: {{ $name }}}
+  ports:
+    {{- range $w.ports }}
+    - name: {{ .name }}
+      port: {{ .containerPort }}
+      targetPort: {{ .containerPort }}
+    {{- end }}
+{{- end }}
+{{- end }}

@@ -250,6 +250,37 @@ public sealed class ValkeyCartStore : ICartStore, IDisposable, IAsyncDisposable
         }
     }
 
+    public async Task<Oteldemo.Cart> RemoveItemAsync(string userId, string productId)
+    {
+        ValidateUserId(userId);
+        if (string.IsNullOrWhiteSpace(productId))
+            throw new RpcException(new Status(StatusCode.InvalidArgument, "Product required"));
+        try
+        {
+            var db = GetPooledDatabase();
+            for (int attempt = 0; attempt < MaximumCartUpdateRetries; attempt++)
+            {
+                var value = await WaitForRedisAsync(db.HashGetAsync(userId, CartFieldName));
+                var cart = ParseCart(value, userId);
+                for (int i = cart.Items.Count - 1; i >= 0; i--)
+                    if (cart.Items[i].ProductId == productId) cart.Items.RemoveAt(i);
+                var tx = db.CreateTransaction();
+                tx.AddCondition(value.IsNull ? Condition.HashNotExists(userId, CartFieldName)
+                                            : Condition.HashEqual(userId, CartFieldName, value));
+                var write = tx.HashSetAsync(userId, CartFieldName, cart.ToByteArray());
+                var expiry = tx.KeyExpireAsync(userId, CartTtl);
+                if (await WaitForRedisAsync(tx.ExecuteAsync()))
+                {
+                    await WaitForRedisAsync(Task.WhenAll(write, expiry));
+                    return cart;
+                }
+            }
+            throw new RpcException(new Status(StatusCode.Aborted, "Cart changed concurrently; retry"));
+        }
+        catch (RpcException) { throw; }
+        catch (Exception exception) { throw MapStorageException(exception, "remove cart item"); }
+    }
+
     public async Task EmptyCartAsync(string userId)
     {
         ValidateUserId(userId);
